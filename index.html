@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FatBurn">
+<meta name="theme-color" content="#0d0d0d">
+<title>Fat Burn Protocol</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --card: #1c1c1c;
+  --border: #2a2a2a;
+  --accent: #ff4d00;
+  --accent2: #ff8040;
+  --text: #f0ede8;
+  --muted: #666;
+  --green: #34d877;
+  --yellow: #ffc844;
+  --purple: #a87fff;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── APP SHELL ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+}
+
+/* ── STATUS BAR SPACER ── */
+.status-bar {
+  height: var(--safe-top);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ── HOME SCREEN ── */
+#screen-home {
+  background: var(--bg);
+}
+
+.home-header {
+  padding: 20px 24px 0;
+  flex-shrink: 0;
+}
+
+.home-greeting {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.home-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  line-height: 0.9;
+  letter-spacing: 2px;
+}
+.home-title span { color: var(--accent); }
+
+/* Weekly ring progress */
+.weekly-ring-section {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.ring-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+}
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--border); stroke-width: 8; }
+.ring-fill { fill: none; stroke: url(#ringGrad); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.ring-pct { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); line-height: 1; }
+.ring-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+.ring-stats { flex: 1; }
+.ring-stat { margin-bottom: 8px; }
+.ring-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1; }
+.ring-stat-lbl { font-size: 11px; color: var(--muted); }
+
+/* Day cards scroll */
+.days-label {
+  padding: 0 24px 10px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.days-scroll {
+  padding: 0 24px 16px;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.days-scroll::-webkit-scrollbar { display: none; }
+
+.day-pill {
+  flex-shrink: 0;
+  width: 64px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 0;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.day-pill.today { border-color: var(--accent); }
+.day-pill.today::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent);
+}
+.day-pill.completed { border-color: var(--green); }
+.day-pill.completed::after { background: var(--green); }
+.day-pill.rest-day { opacity: 0.5; }
+.day-pill-name { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.day-pill-icon { font-size: 22px; margin: 4px 0; }
+.day-pill-label { font-size: 9px; color: var(--muted); }
+.day-pill.today .day-pill-name { color: var(--accent); }
+.day-pill.completed .day-pill-name { color: var(--green); }
+
+/* Today's workout card */
+.today-card {
+  margin: 0 24px;
+  background: linear-gradient(135deg, #1a0800 0%, #1c1c1c 100%);
+  border: 1px solid rgba(255,77,0,0.3);
+  border-radius: 20px;
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.today-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(255,77,0,0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.today-card:active { transform: scale(0.98); }
+.today-card-label { font-size: 11px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.today-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; line-height: 1; }
+.today-card-sub { font-size: 13px; color: #aaa; margin-top: 4px; }
+.today-card-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.tc-chip {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.tc-fire { background: rgba(255,77,0,0.15); color: var(--accent); }
+.tc-time { background: rgba(255,200,68,0.1); color: var(--yellow); }
+.tc-arrow {
+  margin-left: auto;
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Quick tips */
+.quick-tips {
+  margin: 16px 24px 0;
+  flex-shrink: 0;
+}
+.tip-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.tip-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+.tip-scroll::-webkit-scrollbar { display: none; }
+.tip-card {
+  flex-shrink: 0;
+  width: 200px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+.tip-emoji { font-size: 22px; margin-bottom: 6px; }
+.tip-text { font-size: 12px; color: #aaa; line-height: 1.5; }
+
+/* ── WORKOUT SCREEN ── */
+#screen-workout {
+  background: var(--bg);
+}
+
+.workout-topbar {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.workout-topbar-info { flex: 1; overflow: hidden; }
+.workout-topbar-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workout-topbar-sub { font-size: 11px; color: var(--muted); }
+
+.workout-progress-bar {
+  height: 3px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 20px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.workout-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.workout-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 20px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.workout-scroll::-webkit-scrollbar { display: none; }
+
+/* Phase headers */
+.phase-header {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 20px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.phase-header:first-child { margin-top: 0; }
+.phase-line { flex: 1; height: 1px; background: var(--border); }
+
+.phase-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #999;
+  line-height: 1.5;
+}
+
+/* Exercise items */
+.ex-item {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.ex-item:active { transform: scale(0.99); }
+.ex-item.done { border-color: rgba(52,216,119,0.4); }
+.ex-item.done::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(52,216,119,0.03);
+}
+
+.ex-check {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 1;
+}
+.ex-item.done .ex-check { border-color: var(--green); background: rgba(52,216,119,0.15); }
+
+.ex-num-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  min-width: 22px;
+  position: relative; z-index: 1;
+}
+
+.ex-body { flex: 1; overflow: hidden; position: relative; z-index: 1; }
+.ex-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ex-item.done .ex-name { text-decoration: line-through; opacity: 0.5; }
+
+.ex-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative; z-index: 1;
+}
+.tag-s { background: rgba(255,77,0,0.15); color: var(--accent); }
+.tag-c { background: rgba(255,200,68,0.1); color: var(--yellow); }
+.tag-h { background: rgba(168,127,255,0.15); color: var(--purple); }
+.tag-o { background: rgba(52,216,119,0.1); color: var(--green); }
+
+/* Burn card */
+.burn-card {
+  background: linear-gradient(135deg, #1a0800, #1c1c1c);
+  border: 1px solid rgba(255,77,0,0.25);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+.burn-flame { font-size: 32px; }
+.burn-info { flex: 1; }
+.burn-val { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--accent); line-height: 1; }
+.burn-lbl { font-size: 11px; color: var(--muted); }
+.burn-note { font-size: 11px; color: var(--muted); max-width: 120px; text-align: right; line-height: 1.4; }
+
+.workout-tip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+}
+.workout-tip strong { color: var(--accent2); }
+
+.bottom-spacer { height: 40px; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
+  flex-shrink: 0;
+}
+.nav-item {
+  flex: 1;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+.nav-item.active { opacity: 1; }
+.nav-item.active .nav-icon { color: var(--accent); }
+.nav-icon { font-size: 22px; }
+.nav-label { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); }
+.nav-item.active .nav-label { color: var(--accent); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 80px);
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--green);
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── PLAN SCREEN ── */
+#screen-plan {
+  background: var(--bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.plan-header {
+  padding: 20px 24px 10px;
+  flex-shrink: 0;
+}
+.plan-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; }
+.plan-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.plan-list { padding: 0 24px; }
+.plan-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.plan-card:active { opacity: 0.8; transform: scale(0.99); }
+.plan-card.today-plan { border-color: rgba(255,77,0,0.4); }
+.plan-day-badge {
+  width: 50px; height: 50px;
+  border-radius: 14px;
+  background: var(--surface);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.plan-day-badge.fire { background: rgba(255,77,0,0.12); border-color: rgba(255,77,0,0.3); }
+.plan-day-badge.rest { background: var(--surface); }
+.plan-day-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); line-height: 1; }
+.plan-day-name { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.plan-card-info { flex: 1; overflow: hidden; }
+.plan-card-title { font-weight: 600; font-size: 15px; }
+.plan-card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-card-arrow { font-size: 18px; color: var(--muted); }
+.plan-done-badge {
+  width: 22px; height: 22px;
+  background: rgba(52,216,119,0.15);
+  border: 1px solid var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: slideUp 0.3s ease forwards; }
+
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.check-pop { animation: checkPop 0.25s ease; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="status-bar"></div>
+
+  <!-- ── HOME ── -->
+  <div class="screen active" id="screen-home">
+
+    <div class="home-header">
+      <div class="home-greeting">Good day, Venu 👋</div>
+      <div class="home-title">FAT <span>BURN</span><br>PROTOCOL</div>
+    </div>
+
+    <div class="weekly-ring-section">
+      <div class="ring-wrap">
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#ff4d00"/>
+              <stop offset="100%" stop-color="#ff8040"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="48" cy="48" r="40"/>
+          <circle class="ring-fill" id="ringCircle" cx="48" cy="48" r="40"
+            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-pct" id="ringPct">0%</div>
+          <div class="ring-lbl">Done</div>
+        </div>
+      </div>
+      <div class="ring-stats">
+        <div class="ring-stat">
+          <div class="ring-stat-val" id="statExDone">0 <span style="font-size:14px;color:var(--muted)">exercises</span></div>
+          <div class="ring-stat-lbl">completed this week</div>
+        </div>
+        <div class="ring-stat">
+          <div class="ring-stat-val" style="color:var(--yellow)" id="statDaysDone">0 <span style="font-size:14px;color:var(--muted)">days</span></div>
+          <div class="ring-stat-lbl">of 5 workout days</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="days-label">This Week</div>
+    <div class="days-scroll" id="dayPills"></div>
+
+    <div class="today-card animate-in" id="todayCard" onclick="openTodayWorkout()">
+      <div class="today-card-label">Today's Workout</div>
+      <div class="today-card-title" id="todayTitle">—</div>
+      <div class="today-card-sub" id="todaySub">—</div>
+      <div class="today-card-footer">
+        <span class="tc-chip tc-fire" id="todayChip1">—</span>
+        <span class="tc-chip tc-time">⏱ 60 min</span>
+        <div class="tc-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="quick-tips" style="margin-top:18px;">
+      <div class="tip-title">Quick Tips</div>
+      <div class="tip-scroll">
+        <div class="tip-card">
+          <div class="tip-emoji">💧</div>
+          <div class="tip-text">Drink 500ml water 30 min before your workout to boost performance.</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-emoji">😴</div>
+          <div class="tip-text">7–9 hours sleep is when your body burns fat and repairs muscle.</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-emoji">🍽️</div>
+          <div class="tip-text">Eat protein within 45 min post-workout to maximise fat loss & muscle retention.</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-emoji">🔥</div>
+          <div class="tip-text">HIIT creates an "afterburn" effect — you keep burning calories for hours after.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── WORKOUT ── -->
+  <div class="screen" id="screen-workout">
+    <div class="workout-topbar">
+      <div class="back-btn" onclick="goBack()">‹</div>
+      <div class="workout-topbar-info">
+        <div class="workout-topbar-title" id="wTopTitle">—</div>
+        <div class="workout-topbar-sub" id="wTopSub">—</div>
+      </div>
+    </div>
+    <div style="padding: 0 20px; margin-bottom: 8px; flex-shrink:0;">
+      <div class="workout-progress-bar">
+        <div class="workout-progress-fill" id="wProgressFill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="workout-scroll" id="workoutScrollArea"></div>
+  </div>
+
+  <!-- ── PLAN ── -->
+  <div class="screen" id="screen-plan">
+    <div class="plan-header">
+      <div class="plan-title">WEEKLY PLAN</div>
+      <div class="plan-sub">5 workouts · 2 rest days · 60 min sessions</div>
+    </div>
+    <div class="plan-list" id="planList"></div>
+    <div style="height: 20px;"></div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+    </div>
+    <div class="nav-item" id="nav-plan" onclick="switchTab('plan')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">Plan</div>
+    </div>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const DAYS = [
+  {
+    name: "Monday", short: "MON", icon: "🦵",
+    title: "HIIT + LOWER BODY",
+    sub: "Legs, Glutes & Cardio Blast",
+    calories: "420–500",
+    intensity: "🔥 High Intensity",
+    warmup: "5 min — light jog, jumping jacks, dynamic leg swings & hip circles",
+    exercises: [
+      { name: "Jump Squats", detail: "4 × 15 reps · 30s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Reverse Lunges", detail: "3 × 12 each leg · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Squat to Lateral Raise", detail: "3 × 12 reps · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Burpees", detail: "4 × 10 reps · 30s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Romanian Deadlifts (DB)", detail: "3 × 12 reps · 60s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Glute Bridges", detail: "3 × 20 reps · 30s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Mountain Climbers", detail: "3 × 30s · 30s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Jump Rope / High Knees", detail: "10 min steady pace finisher", tag: "Cardio", tagCls: "tag-c" }
+    ],
+    cooldown: "5 min — quad stretch, hamstring fold, pigeon pose",
+    tip: "<strong>Land softly on jump squats</strong> — knees tracking over toes. HIIT sessions continue burning calories for hours after (EPOC effect)."
+  },
+  {
+    name: "Tuesday", short: "TUE", icon: "💪",
+    title: "UPPER BODY + CORE",
+    sub: "Chest, Back, Shoulders & Abs",
+    calories: "300–380",
+    intensity: "💪 Moderate",
+    warmup: "5 min — arm circles, shoulder rotations, cat-cow, light push-up reps",
+    exercises: [
+      { name: "Push-Ups (Wide / Close)", detail: "4 × 15 reps alternate grip · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Dumbbell Rows", detail: "3 × 12 each arm · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Shoulder Press (DB)", detail: "3 × 12 reps · 60s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Renegade Rows", detail: "3 × 10 reps · 45s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Tricep Dips", detail: "3 × 15 reps · 30s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Plank Shoulder Taps", detail: "3 × 30s · 30s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Bicycle Crunches", detail: "3 × 20 reps · 20s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Incline Treadmill Walk", detail: "15 min at 3–5% grade", tag: "Cardio", tagCls: "tag-c" }
+    ],
+    cooldown: "5 min — chest doorway stretch, lat stretch, child's pose",
+    tip: "<strong>Incline walk at the end</strong> keeps heart rate elevated without taxing worked muscles. Even 3% incline increases calorie burn by ~20%."
+  },
+  {
+    name: "Wednesday", short: "WED", icon: "🏃",
+    title: "STEADY STATE CARDIO",
+    sub: "Aerobic Endurance · Full-Body Fat Burn",
+    calories: "350–450",
+    intensity: "❤️ Low–Moderate",
+    warmup: "5 min — slow jog / walk building to target pace",
+    exercises: [
+      { name: "Run / Jog", detail: "30 min at conversational pace (60–70% max HR)", tag: "Cardio", tagCls: "tag-c" },
+      { name: "Bodyweight Squats", detail: "3 × 20 reps — active recovery format", tag: "Strength", tagCls: "tag-s" },
+      { name: "Walking Lunges", detail: "3 × 15 each leg", tag: "Strength", tagCls: "tag-s" },
+      { name: "Side Shuffles", detail: "2 × 30s each direction", tag: "Cardio", tagCls: "tag-c" },
+      { name: "Dead Bug (Core)", detail: "3 × 10 reps — slow & controlled", tag: "Core", tagCls: "tag-o" }
+    ],
+    cooldown: "5 min — easy walk + full-body stretch sequence",
+    tip: "<strong>Wednesday is your aerobic base day.</strong> Steady-state cardio burns fat directly as fuel. Keep intensity manageable so you're fresh for Thursday's HIIT."
+  },
+  {
+    name: "Thursday", short: "THU", icon: "⚡",
+    title: "HIIT + FULL BODY",
+    sub: "Metabolic Circuit · Total-Body Conditioning",
+    calories: "400–500",
+    intensity: "🔥 High Intensity",
+    warmup: "5 min — jumping jacks, arm swings, hip openers, bodyweight squats",
+    exercises: [
+      { name: "KB / DB Swings", detail: "4 × 20 reps · 30s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Thrusters (DB Squat + Press)", detail: "3 × 12 reps · 45s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Box Jumps / Step-Ups", detail: "4 × 10 reps · 30s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Bent-Over Rows", detail: "3 × 12 reps · 60s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Push-Up to T-Rotation", detail: "3 × 8 each side · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Speed Skaters", detail: "3 × 30s · 20s rest", tag: "HIIT", tagCls: "tag-h" },
+      { name: "Russian Twists (weighted)", detail: "3 × 20 reps · 30s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Rowing / Bike Intervals", detail: "5 × 1 min hard / 1 min easy", tag: "Cardio", tagCls: "tag-c" }
+    ],
+    cooldown: "5 min — full-body foam roll + light stretching",
+    tip: "<strong>Thrusters are the ultimate fat-loss move</strong> — they hit legs, core, and shoulders simultaneously. The rowing intervals can be swapped for battle ropes or jump rope."
+  },
+  {
+    name: "Friday", short: "FRI", icon: "🍑",
+    title: "LOWER BODY + CORE",
+    sub: "Sculpting · Glutes, Hamstrings & Abs",
+    calories: "320–400",
+    intensity: "💪 Moderate",
+    warmup: "5 min — leg swings, hip circles, glute activation with resistance band",
+    exercises: [
+      { name: "Sumo Squats (DB)", detail: "4 × 15 reps · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Step-Ups with Knee Drive", detail: "3 × 12 each leg · 45s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Single-Leg Deadlift", detail: "3 × 10 each leg · 60s rest", tag: "Strength", tagCls: "tag-s" },
+      { name: "Lateral Band Walks", detail: "3 × 20 steps each direction", tag: "Core", tagCls: "tag-o" },
+      { name: "Clamshells (band)", detail: "3 × 20 each side", tag: "Core", tagCls: "tag-o" },
+      { name: "Plank Hip Dips", detail: "3 × 15 each side · 30s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Leg Raises", detail: "3 × 15 reps · 30s rest", tag: "Core", tagCls: "tag-o" },
+      { name: "Incline Walk / Elliptical", detail: "15 min cardio finisher", tag: "Cardio", tagCls: "tag-c" }
+    ],
+    cooldown: "5 min — pigeon pose, figure-4 stretch, standing hip flexor stretch",
+    tip: "<strong>Slow the eccentric phase</strong> — lower each rep over 3 seconds for extra muscle activation and calorie burn without extra weight."
+  },
+  {
+    name: "Saturday", short: "SAT", icon: "😴", title: "REST DAY", sub: "Recovery & Adaptation", rest: true
+  },
+  {
+    name: "Sunday", short: "SUN", icon: "🧘", title: "REST DAY", sub: "Recovery & Adaptation", rest: true
+  }
+];
+
+// ── STATE ──
+let completedEx = {};
+let currentDayIdx = null;
+let currentScreen = 'home';
+
+// Init per-day exercise state
+DAYS.forEach((d, i) => {
+  if (!d.rest) completedEx[i] = new Array(d.exercises.length).fill(false);
+});
+
+// Get today's day index (0=Mon … 6=Sun)
+function getTodayIdx() {
+  const dow = new Date().getDay(); // 0=Sun
+  return dow === 0 ? 6 : dow - 1; // map to Mon=0
+}
+
+// ── RENDER HOME ──
+function renderHome() {
+  const todayIdx = getTodayIdx();
+  const today = DAYS[todayIdx];
+
+  // Day pills
+  const pillsEl = document.getElementById('dayPills');
+  pillsEl.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'day-pill' + (i === todayIdx ? ' today' : '') + (d.rest ? ' rest-day' : '') + (isDayComplete(i) ? ' completed' : '');
+    pill.innerHTML = `<div class="day-pill-name">${d.short}</div><div class="day-pill-icon">${d.icon}</div><div class="day-pill-label">${isDayComplete(i) ? '✓ Done' : d.rest ? 'Rest' : 'Workout'}</div>`;
+    if (!d.rest) pill.onclick = () => openWorkout(i);
+    pillsEl.appendChild(pill);
+  });
+
+  // Today card
+  if (today.rest) {
+    document.getElementById('todayTitle').textContent = 'REST DAY';
+    document.getElementById('todaySub').textContent = 'Recovery — light walk or yoga is fine';
+    document.getElementById('todayChip1').textContent = '😴 Rest';
+  } else {
+    document.getElementById('todayTitle').textContent = today.title;
+    document.getElementById('todaySub').textContent = today.sub;
+    document.getElementById('todayChip1').textContent = today.intensity;
+  }
+
+  // Ring
+  updateRing();
+}
+
+function isDayComplete(i) {
+  if (DAYS[i].rest) return false;
+  return completedEx[i] && completedEx[i].every(Boolean);
+}
+
+function updateRing() {
+  const totalEx = Object.values(completedEx).flat().length;
+  const doneEx = Object.values(completedEx).flat().filter(Boolean).length;
+  const pct = totalEx > 0 ? Math.round((doneEx / totalEx) * 100) : 0;
+  const circumference = 251.2;
+  const offset = circumference - (pct / 100) * circumference;
+
+  document.getElementById('ringCircle').style.strokeDashoffset = offset;
+  document.getElementById('ringPct').textContent = pct + '%';
+  document.getElementById('statExDone').innerHTML = `${doneEx} <span style="font-size:14px;color:var(--muted)">exercises</span>`;
+
+  const daysDone = Object.keys(completedEx).filter(i => isDayComplete(parseInt(i))).length;
+  document.getElementById('statDaysDone').innerHTML = `${daysDone} <span style="font-size:14px;color:var(--muted)">days</span>`;
+}
+
+// ── RENDER PLAN ──
+function renderPlan() {
+  const todayIdx = getTodayIdx();
+  const listEl = document.getElementById('planList');
+  listEl.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'plan-card' + (i === todayIdx ? ' today-plan' : '');
+    const done = isDayComplete(i);
+    card.innerHTML = `
+      <div class="plan-day-badge ${d.rest ? 'rest' : 'fire'}">
+        <div class="plan-day-num">${d.icon}</div>
+        <div class="plan-day-name">${d.short}</div>
+      </div>
+      <div class="plan-card-info">
+        <div class="plan-card-title">${d.title}</div>
+        <div class="plan-card-sub">${d.rest ? '😴 Recovery day' : d.sub}</div>
+      </div>
+      ${done ? '<div class="plan-done-badge">✓</div>' : (d.rest ? '' : '<div class="plan-card-arrow">›</div>')}
+    `;
+    if (!d.rest) card.onclick = () => { openWorkout(i); };
+    listEl.appendChild(card);
+  });
+}
+
+// ── OPEN WORKOUT ──
+function openTodayWorkout() {
+  const todayIdx = getTodayIdx();
+  if (!DAYS[todayIdx].rest) openWorkout(todayIdx);
+}
+
+function openWorkout(i) {
+  currentDayIdx = i;
+  const d = DAYS[i];
+  document.getElementById('wTopTitle').textContent = d.title;
+  document.getElementById('wTopSub').textContent = d.name + ' · ' + d.calories + ' kcal est.';
+
+  const area = document.getElementById('workoutScrollArea');
+  area.innerHTML = '';
+
+  if (d.rest) {
+    area.innerHTML = `<div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:64px;margin-bottom:16px;">${d.icon}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--muted);">REST DAY</div>
+      <div style="font-size:14px;color:var(--muted);margin-top:8px;">Recovery is where fat loss happens.<br>Sleep well, eat clean, stay hydrated.</div>
+    </div>`;
+  } else {
+    // Warmup
+    addPhaseHeader(area, '🌡 WARM-UP · 5 MIN');
+    const wu = document.createElement('div');
+    wu.className = 'phase-strip';
+    wu.textContent = d.warmup;
+    area.appendChild(wu);
+
+    // Exercises
+    addPhaseHeader(area, '⚡ MAIN WORKOUT · 50 MIN');
+    d.exercises.forEach((ex, j) => {
+      const item = document.createElement('div');
+      item.className = 'ex-item' + (completedEx[i][j] ? ' done' : '');
+      item.id = `wex-${i}-${j}`;
+      item.innerHTML = `
+        <div class="ex-check" id="wck-${i}-${j}">${completedEx[i][j] ? '✓' : ''}</div>
+        <div class="ex-num-badge">${String(j+1).padStart(2,'0')}</div>
+        <div class="ex-body">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-detail">${ex.detail}</div>
+        </div>
+        <span class="ex-tag ${ex.tagCls}">${ex.tag}</span>
+      `;
+      item.onclick = () => toggleExercise(i, j);
+      area.appendChild(item);
+    });
+
+    // Cooldown
+    addPhaseHeader(area, '🧘 COOL-DOWN · 5 MIN');
+    const cd = document.createElement('div');
+    cd.className = 'phase-strip';
+    cd.textContent = d.cooldown;
+    area.appendChild(cd);
+
+    // Burn card
+    const burn = document.createElement('div');
+    burn.className = 'burn-card';
+    burn.innerHTML = `
+      <div class="burn-flame">🔥</div>
+      <div class="burn-info">
+        <div class="burn-val">${d.calories}</div>
+        <div class="burn-lbl">kcal estimated</div>
+      </div>
+      <div class="burn-note">Varies by weight & effort level</div>
+    `;
+    area.appendChild(burn);
+
+    // Tip
+    const tip = document.createElement('div');
+    tip.className = 'workout-tip';
+    tip.innerHTML = '💡 ' + d.tip;
+    area.appendChild(tip);
+    area.appendChild(Object.assign(document.createElement('div'), { className: 'bottom-spacer' }));
+
+    updateWorkoutProgress(i);
+  }
+
+  // Show workout screen on top of current
+  document.getElementById('screen-workout').classList.add('active');
+  document.getElementById('screen-workout').style.position = 'absolute';
+  document.getElementById('screen-workout').style.inset = '0';
+  document.getElementById('screen-workout').style.zIndex = '10';
+  document.getElementById('screen-workout').style.animation = 'slideUp 0.25s ease';
+}
+
+function addPhaseHeader(parent, text) {
+  const h = document.createElement('div');
+  h.className = 'phase-header';
+  h.innerHTML = `${text} <div class="phase-line"></div>`;
+  parent.appendChild(h);
+}
+
+function goBack() {
+  const ws = document.getElementById('screen-workout');
+  ws.classList.remove('active');
+  ws.style.position = '';
+  ws.style.inset = '';
+  ws.style.zIndex = '';
+  renderHome();
+  if (currentScreen === 'plan') renderPlan();
+}
+
+// ── TOGGLE EXERCISE ──
+function toggleExercise(dayIdx, exIdx) {
+  completedEx[dayIdx][exIdx] = !completedEx[dayIdx][exIdx];
+  const done = completedEx[dayIdx][exIdx];
+  const item = document.getElementById(`wex-${dayIdx}-${exIdx}`);
+  const ck = document.getElementById(`wck-${dayIdx}-${exIdx}`);
+  item.classList.toggle('done', done);
+  ck.textContent = done ? '✓' : '';
+  ck.classList.add('check-pop');
+  setTimeout(() => ck.classList.remove('check-pop'), 300);
+
+  updateWorkoutProgress(dayIdx);
+
+  // Day complete toast
+  if (completedEx[dayIdx].every(Boolean)) {
+    showToast('🎉 Workout complete! Great work!');
+  } else if (done) {
+    showToast('✓ Exercise done!');
+  }
+}
+
+function updateWorkoutProgress(i) {
+  const total = completedEx[i].length;
+  const done = completedEx[i].filter(Boolean).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('wProgressFill').style.width = pct + '%';
+}
+
+// ── TAB SWITCHING ──
+function switchTab(tab) {
+  currentScreen = tab;
+  ['home', 'plan'].forEach(t => {
+    document.getElementById(`screen-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`nav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'home') renderHome();
+  if (tab === 'plan') renderPlan();
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ── INIT ──
+renderHome();
+</script>
+</body>
+</html>
