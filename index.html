@@ -12,6 +12,20 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+<!-- KILL OLD SERVICE WORKERS IMMEDIATELY -->
+<script>
+(function() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(reg) { reg.unregister(); });
+    });
+    caches.keys().then(function(keys) {
+      keys.forEach(function(k) { caches.delete(k); });
+    });
+  }
+})();
+</script>
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -19,13 +33,11 @@
   --bg: #0a0a0a;
   --surface: #141414;
   --card: #1a1a1a;
-  --card2: #202020;
   --border: #282828;
   --border2: #333;
   --accent: #ff4500;
   --accent2: #ff7a3d;
   --accent-dim: rgba(255,69,0,0.12);
-  --accent-glow: rgba(255,69,0,0.25);
   --text: #f2ede8;
   --text2: #aaa;
   --muted: #555;
@@ -43,51 +55,30 @@
 
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; -webkit-font-smoothing: antialiased; }
 
-/* ── LAYOUT ── */
 .app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
 .status-bar { height: var(--safe-top); background: var(--bg); flex-shrink: 0; }
 .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
 .screen.active { display: flex; }
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  display: flex; background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding-bottom: var(--safe-bottom); flex-shrink: 0;
-}
-.nav-item {
-  flex: 1; padding: 10px 0; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; cursor: pointer; opacity: 0.38; transition: opacity 0.2s;
-}
+/* BOTTOM NAV */
+.bottom-nav { display: flex; background: var(--surface); border-top: 1px solid var(--border); padding-bottom: var(--safe-bottom); flex-shrink: 0; }
+.nav-item { flex: 1; padding: 10px 0; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; opacity: 0.38; transition: opacity 0.2s; }
 .nav-item.active { opacity: 1; }
 .nav-icon { font-size: 20px; }
 .nav-label { font-size: 10px; letter-spacing: 0.5px; color: var(--text2); font-weight: 600; }
 .nav-item.active .nav-label { color: var(--accent); }
 
-/* ── HOME SCREEN ── */
-.home-scroll {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; scrollbar-width: none;
-}
+/* HOME */
+.home-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .home-scroll::-webkit-scrollbar { display: none; }
-
-.home-hero {
-  padding: calc(var(--safe-top) + 8px) 22px 20px;
-  background: linear-gradient(160deg, #0f0300 0%, #0a0a0a 60%);
-  position: relative; overflow: hidden;
-}
-.home-hero::after {
-  content: ''; position: absolute; top: -80px; right: -80px;
-  width: 260px; height: 260px;
-  background: radial-gradient(circle, rgba(255,69,0,0.18) 0%, transparent 70%);
-  border-radius: 50%; pointer-events: none;
-}
+.home-hero { padding: calc(var(--safe-top) + 8px) 22px 20px; background: linear-gradient(160deg, #0f0300 0%, #0a0a0a 60%); position: relative; overflow: hidden; }
+.home-hero::after { content: ''; position: absolute; top: -80px; right: -80px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(255,69,0,0.18) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
 .hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
 .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 0.88; letter-spacing: 3px; }
 .hero-title span { color: var(--accent); }
 .hero-sub { font-size: 13px; color: var(--text2); margin-top: 8px; font-weight: 400; }
 
-/* Ring + stats */
+/* RING */
 .ring-row { display: flex; align-items: center; gap: 18px; padding: 20px 22px 0; }
 .ring-wrap { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
 .ring-wrap svg { transform: rotate(-90deg); }
@@ -101,20 +92,10 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .rs-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; line-height: 1; }
 .rs-lbl { font-size: 11px; color: var(--muted); font-weight: 400; }
 
-/* Today card */
+/* TODAY CARD */
 .section-label { padding: 18px 22px 8px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-.today-card {
-  margin: 0 16px; border-radius: 18px; padding: 18px 18px 16px;
-  background: linear-gradient(135deg, #1a0900, #1c1c1c);
-  border: 1px solid rgba(255,69,0,0.3); cursor: pointer;
-  transition: transform 0.15s; position: relative; overflow: hidden;
-}
-.today-card::before {
-  content: ''; position: absolute; top: -40px; right: -40px;
-  width: 140px; height: 140px;
-  background: radial-gradient(circle, rgba(255,69,0,0.18) 0%, transparent 70%);
-  border-radius: 50%; pointer-events: none;
-}
+.today-card { margin: 0 16px; border-radius: 18px; padding: 18px 18px 16px; background: linear-gradient(135deg, #1a0900, #1c1c1c); border: 1px solid rgba(255,69,0,0.3); cursor: pointer; transition: transform 0.15s; position: relative; overflow: hidden; }
+.today-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(255,69,0,0.18) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
 .today-card:active { transform: scale(0.98); }
 .tc-eyebrow { font-size: 10px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
 .tc-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; line-height: 1; }
@@ -125,14 +106,10 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .chip-time { background: var(--yellow-dim); color: var(--yellow); }
 .chip-go { margin-left: auto; width: 34px; height: 34px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 
-/* Week strip */
+/* WEEK STRIP */
 .week-strip { display: flex; gap: 7px; padding: 0 16px 16px; overflow-x: auto; scrollbar-width: none; }
 .week-strip::-webkit-scrollbar { display: none; }
-.day-pill {
-  flex-shrink: 0; width: 58px; border-radius: 14px; padding: 10px 0;
-  text-align: center; cursor: pointer; transition: all 0.2s;
-  background: var(--card); border: 1.5px solid var(--border); position: relative;
-}
+.day-pill { flex-shrink: 0; width: 58px; border-radius: 14px; padding: 10px 0; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--card); border: 1.5px solid var(--border); position: relative; }
 .day-pill.is-today { border-color: var(--accent); }
 .day-pill.is-rest { background: var(--surface); border-color: var(--border); opacity: 0.55; }
 .day-pill.is-done { border-color: var(--green); }
@@ -141,128 +118,69 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .day-pill .dp-lbl { font-size: 9px; color: var(--muted); font-weight: 600; }
 .day-pill.is-today .dp-name { color: var(--accent); }
 .day-pill.is-done .dp-name { color: var(--green); }
-.day-pill .rest-tag {
-  position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
-  background: var(--muted); color: #000; font-size: 8px; font-weight: 700;
-  padding: 1px 6px; border-radius: 6px; letter-spacing: 1px; white-space: nowrap;
-}
+.day-pill .rest-tag { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); background: var(--muted); color: #000; font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 6px; letter-spacing: 1px; white-space: nowrap; }
 
-/* Tips row */
+/* TIPS */
 .tips-row { display: flex; gap: 10px; padding: 0 16px 24px; overflow-x: auto; scrollbar-width: none; }
 .tips-row::-webkit-scrollbar { display: none; }
 .tip-card { flex-shrink: 0; width: 170px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 13px; }
 .tip-icon { font-size: 20px; margin-bottom: 5px; }
 .tip-txt { font-size: 12px; color: var(--text2); line-height: 1.5; font-weight: 400; }
 
-/* ── SCHEDULE SCREEN ── */
+/* SCHEDULE SCREEN */
 .sch-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .sch-scroll::-webkit-scrollbar { display: none; }
 .sch-header { padding: 20px 22px 6px; }
 .sch-title { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; }
 .sch-sub { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 400; }
-.rest-hint {
-  margin: 8px 16px 12px; padding: 11px 14px; border-radius: 12px;
-  background: rgba(255,69,0,0.06); border: 1px solid rgba(255,69,0,0.2);
-  font-size: 12px; color: var(--text2); line-height: 1.5;
-  display: flex; align-items: flex-start; gap: 8px;
-}
+.rest-hint { margin: 8px 16px 12px; padding: 11px 14px; border-radius: 12px; background: rgba(255,69,0,0.06); border: 1px solid rgba(255,69,0,0.2); font-size: 12px; color: var(--text2); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
 .rest-hint-icon { font-size: 16px; flex-shrink: 0; }
-
 .sch-list { padding: 0 16px 20px; display: flex; flex-direction: column; gap: 8px; }
-.sch-card {
-  background: var(--card); border: 1.5px solid var(--border);
-  border-radius: 16px; padding: 14px 16px;
-  display: flex; align-items: center; gap: 13px; cursor: pointer;
-  transition: all 0.2s; position: relative; overflow: hidden;
-}
+.sch-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 13px; cursor: pointer; transition: all 0.2s; }
 .sch-card:active { transform: scale(0.99); }
 .sch-card.is-today { border-color: rgba(255,69,0,0.4); }
 .sch-card.is-rest { opacity: 0.55; background: var(--surface); }
 .sch-card.is-done { border-color: rgba(46,204,113,0.35); }
-
-.sch-badge {
-  width: 48px; height: 48px; border-radius: 13px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  flex-shrink: 0; border: 1px solid var(--border);
-  background: var(--surface);
-}
+.sch-badge { width: 48px; height: 48px; border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--border); background: var(--surface); }
 .sch-badge.workout-badge { background: var(--accent-dim); border-color: rgba(255,69,0,0.25); }
-.sch-badge.rest-badge { background: var(--surface); }
 .sch-badge-icon { font-size: 18px; line-height: 1; }
 .sch-badge-day { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-top: 2px; }
-
 .sch-info { flex: 1; overflow: hidden; }
 .sch-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sch-detail { font-size: 11px; color: var(--text2); margin-top: 2px; font-weight: 400; }
-
 .sch-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-.rest-toggle {
-  font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
-  border: 1.5px solid var(--border2); color: var(--text2); background: transparent;
-  cursor: pointer; font-family: 'Syne', sans-serif; white-space: nowrap;
-  transition: all 0.2s; letter-spacing: 0.5px;
-}
-.rest-toggle.set-rest { border-color: var(--muted); color: var(--text2); }
-.rest-toggle.set-rest:active { background: rgba(255,255,255,0.06); }
+.rest-toggle { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1.5px solid var(--border2); color: var(--text2); background: transparent; cursor: pointer; font-family: 'Syne', sans-serif; white-space: nowrap; transition: all 0.2s; letter-spacing: 0.5px; }
 .rest-toggle.unset-rest { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 .done-badge { width: 22px; height: 22px; background: var(--green-dim); border: 1px solid var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 
-/* ── WORKOUT SCREEN ── */
-#screen-workout {
-  position: absolute; inset: 0; z-index: 20;
-  background: var(--bg); display: none; flex-direction: column;
-}
+/* WORKOUT SCREEN */
+#screen-workout { position: absolute; inset: 0; z-index: 20; background: var(--bg); display: none; flex-direction: column; }
 #screen-workout.open { display: flex; animation: slideUp 0.28s cubic-bezier(.2,.8,.4,1); }
 @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-
-.w-topbar {
-  padding: calc(var(--safe-top) + 6px) 18px 10px;
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-  background: var(--bg);
-}
-.back-btn {
-  width: 36px; height: 36px; background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 20px; flex-shrink: 0; font-family: 'Syne', sans-serif;
-}
+.w-topbar { padding: calc(var(--safe-top) + 6px) 18px 10px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; background: var(--bg); }
+.back-btn { width: 36px; height: 36px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; flex-shrink: 0; }
 .w-topbar-info { flex: 1; overflow: hidden; }
 .w-top-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .w-top-sub { font-size: 11px; color: var(--text2); font-weight: 400; }
 .w-progress { height: 3px; background: var(--border); margin: 0 18px 4px; border-radius: 2px; overflow: hidden; flex-shrink: 0; }
 .w-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
-
 .w-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 12px 18px; }
 .w-scroll::-webkit-scrollbar { display: none; }
-
-/* Phase headers */
 .ph { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .ph:first-child { margin-top: 0; }
 .ph-line { flex: 1; height: 1px; background: var(--border); }
 .phase-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; font-size: 13px; color: var(--text2); line-height: 1.5; font-weight: 400; }
-
-/* Equipment tags */
 .equip-strip { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 .equip-tag { font-size: 10px; padding: 3px 9px; border-radius: 10px; font-weight: 700; letter-spacing: 0.5px; }
 .eq-kb { background: var(--yellow-dim); color: var(--yellow); }
 .eq-db { background: var(--blue-dim); color: var(--blue); }
 .eq-band { background: var(--purple-dim); color: var(--purple); }
 .eq-bw { background: rgba(255,255,255,0.06); color: var(--text2); }
-
-/* Exercise rows */
-.ex-row {
-  background: var(--card); border: 1.5px solid var(--border);
-  border-radius: 13px; padding: 12px 14px; margin-bottom: 7px;
-  display: flex; align-items: center; gap: 11px; cursor: pointer;
-  transition: border-color 0.2s; position: relative; overflow: hidden;
-}
+.ex-row { background: var(--card); border: 1.5px solid var(--border); border-radius: 13px; padding: 12px 14px; margin-bottom: 7px; display: flex; align-items: center; gap: 11px; cursor: pointer; transition: border-color 0.2s; position: relative; overflow: hidden; }
 .ex-row:active { transform: scale(0.99); }
 .ex-row.done { border-color: rgba(46,204,113,0.4); }
 .ex-row.done::after { content: ''; position: absolute; inset: 0; background: rgba(46,204,113,0.03); pointer-events: none; }
-.ex-cb {
-  width: 26px; height: 26px; border: 2px solid var(--border2); border-radius: 7px;
-  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 14px; transition: all 0.2s; position: relative; z-index: 1;
-}
+.ex-cb { width: 26px; height: 26px; border: 2px solid var(--border2); border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.2s; position: relative; z-index: 1; }
 .ex-row.done .ex-cb { border-color: var(--green); background: var(--green-dim); }
 .ex-n { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--border2); min-width: 20px; position: relative; z-index: 1; flex-shrink: 0; }
 .ex-row.done .ex-n { color: rgba(46,204,113,0.35); }
@@ -270,40 +188,17 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .ex-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ex-detail { font-size: 11px; color: var(--text2); margin-top: 1px; font-weight: 400; }
 .ex-row.done .ex-name { text-decoration: line-through; opacity: 0.45; }
-.ex-etag {
-  font-size: 9px; padding: 2px 7px; border-radius: 9px; font-weight: 700;
-  flex-shrink: 0; position: relative; z-index: 1; letter-spacing: 0.3px;
-}
-
-/* Burn + tip cards */
-.burn-card {
-  background: linear-gradient(135deg, #180800, #1a1a1a);
-  border: 1px solid rgba(255,69,0,0.2); border-radius: 14px;
-  padding: 14px 16px; display: flex; align-items: center; gap: 13px; margin-top: 14px;
-}
+.ex-etag { font-size: 9px; padding: 2px 7px; border-radius: 9px; font-weight: 700; flex-shrink: 0; position: relative; z-index: 1; letter-spacing: 0.3px; }
+.burn-card { background: linear-gradient(135deg, #180800, #1a1a1a); border: 1px solid rgba(255,69,0,0.2); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 13px; margin-top: 14px; }
 .burn-flame { font-size: 30px; }
 .burn-val { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--accent); line-height: 1; }
 .burn-lbl { font-size: 11px; color: var(--muted); font-weight: 400; }
 .burn-note { font-size: 11px; color: var(--muted); max-width: 110px; text-align: right; line-height: 1.4; margin-left: auto; font-weight: 400; }
-.w-tip {
-  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2);
-  border-radius: 12px; padding: 11px 13px; margin-top: 10px;
-  font-size: 12px; color: var(--text2); line-height: 1.6; font-weight: 400;
-}
+.w-tip { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 12px; padding: 11px 13px; margin-top: 10px; font-size: 12px; color: var(--text2); line-height: 1.6; font-weight: 400; }
 .w-tip strong { color: var(--accent2); font-weight: 700; }
 .w-spacer { height: 36px; }
-
-/* Toast */
-.toast {
-  position: fixed; bottom: calc(var(--safe-bottom) + 72px); left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  background: var(--green); color: #000; padding: 9px 18px; border-radius: 20px;
-  font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s;
-  pointer-events: none; white-space: nowrap; z-index: 999;
-}
+.toast { position: fixed; bottom: calc(var(--safe-bottom) + 72px); left: 50%; transform: translateX(-50%) translateY(16px); background: var(--green); color: #000; padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-index: 999; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* check pop */
 @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
 .popping { animation: pop 0.22s ease; }
 </style>
@@ -320,7 +215,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
         <div class="hero-title">FAT <span>BURN</span><br>PROTOCOL</div>
         <div class="hero-sub">60 min · 2kg Dumbbells · Bands · 10kg Kettlebell</div>
       </div>
-
       <div class="ring-row">
         <div class="ring-wrap">
           <svg width="88" height="88" viewBox="0 0 88 88">
@@ -349,12 +243,10 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
           </div>
         </div>
       </div>
-
       <div class="section-label">This Week</div>
       <div class="week-strip" id="weekStrip"></div>
-
       <div class="section-label">Today's Session</div>
-      <div class="today-card" id="todayCard" onclick="openTodayWorkout()">
+      <div class="today-card" id="todayCard">
         <div class="tc-eyebrow" id="tcEye">Today</div>
         <div class="tc-title" id="tcTitle">—</div>
         <div class="tc-sub" id="tcSub">—</div>
@@ -364,7 +256,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
           <div class="chip-go">›</div>
         </div>
       </div>
-
       <div class="section-label">Daily Tips</div>
       <div class="tips-row">
         <div class="tip-card"><div class="tip-icon">💧</div><div class="tip-txt">Drink 500ml water 30 min before training to boost performance.</div></div>
@@ -381,17 +272,17 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     <div class="sch-scroll">
       <div class="sch-header">
         <div class="sch-title">WEEKLY SCHEDULE</div>
-        <div class="sch-sub">Tap a day to toggle it as a rest day anytime</div>
+        <div class="sch-sub">Tap "Set Rest" on any day to mark it as recovery</div>
       </div>
       <div class="rest-hint">
         <span class="rest-hint-icon">💡</span>
-        <span>Long-press or tap <strong>"Set Rest"</strong> on any day to mark it as recovery. You can change your rest days anytime — your plan adapts instantly.</span>
+        <span>Tap <strong>"😴 Set Rest"</strong> on any day to make it a rest day. Tap <strong>"↩ Workout"</strong> to switch it back. Your choices are saved automatically.</span>
       </div>
       <div class="sch-list" id="schList"></div>
     </div>
   </div>
 
-  <!-- WORKOUT (overlay) -->
+  <!-- WORKOUT OVERLAY -->
   <div id="screen-workout">
     <div class="w-topbar">
       <div class="back-btn" onclick="closeWorkout()">‹</div>
@@ -413,462 +304,336 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     </div>
   </nav>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════
-// WORKOUT DATA — 7 day templates
-// ══════════════════════════════════════════
+// ══════ WORKOUT DATA ══════
 const WORKOUTS = {
   MON: {
-    icon: '🦵', title: 'LEGS + KETTLEBELL HIIT', sub: 'Lower Body Strength · KB Power',
-    intensity: '🔥 High Intensity', calories: '420–500',
-    warmup: '5 min — leg swings, hip circles, bodyweight squats, jumping jacks',
-    equipment: ['10kg Kettlebell', 'Bodyweight'],
-    equipTags: [{ l:'KB 10kg', c:'eq-kb' }, { l:'Bodyweight', c:'eq-bw' }],
-    exercises: [
-      { n:'KB Goblet Squat', d:'4 × 15 reps · 30s rest · Hold KB at chest', e:'KB 10kg', ec:'eq-kb' },
-      { n:'KB Romanian Deadlift', d:'3 × 12 reps · 45s rest · Hinge at hips', e:'KB 10kg', ec:'eq-kb' },
-      { n:'KB Swing', d:'4 × 20 reps · 30s rest · Drive through hips', e:'KB 10kg', ec:'eq-kb' },
-      { n:'Jump Squats', d:'3 × 15 reps · 30s rest · Land softly', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Reverse Lunges', d:'3 × 12 each leg · 45s rest', e:'Bodyweight', ec:'eq-bw' },
-      { n:'KB Sumo Squat', d:'3 × 15 reps · 30s rest · Wide stance', e:'KB 10kg', ec:'eq-kb' },
-      { n:'Glute Bridge Hold', d:'3 × 30s hold · 20s rest · Squeeze top', e:'Bodyweight', ec:'eq-bw' },
-      { n:'High Knees Finisher', d:'5 × 30s on / 15s off · Max effort', e:'Bodyweight', ec:'eq-bw' },
+    icon:'🦵', title:'LEGS + KETTLEBELL HIIT', sub:'Lower Body Strength · KB Power',
+    intensity:'🔥 High Intensity', calories:'420–500',
+    warmup:'5 min — leg swings, hip circles, bodyweight squats, jumping jacks',
+    equipTags:[{l:'KB 10kg',c:'eq-kb'},{l:'Bodyweight',c:'eq-bw'}],
+    exercises:[
+      {n:'KB Goblet Squat',       d:'4 × 15 reps · 30s rest · Hold KB at chest',      e:'KB 10kg',   ec:'eq-kb'},
+      {n:'KB Romanian Deadlift',  d:'3 × 12 reps · 45s rest · Hinge at hips',          e:'KB 10kg',   ec:'eq-kb'},
+      {n:'KB Swing',              d:'4 × 20 reps · 30s rest · Drive through hips',     e:'KB 10kg',   ec:'eq-kb'},
+      {n:'Jump Squats',           d:'3 × 15 reps · 30s rest · Land softly',            e:'Bodyweight',ec:'eq-bw'},
+      {n:'Reverse Lunges',        d:'3 × 12 each leg · 45s rest',                      e:'Bodyweight',ec:'eq-bw'},
+      {n:'KB Sumo Squat',         d:'3 × 15 reps · 30s rest · Wide stance',            e:'KB 10kg',   ec:'eq-kb'},
+      {n:'Glute Bridge Hold',     d:'3 × 30s hold · 20s rest · Squeeze at top',        e:'Bodyweight',ec:'eq-bw'},
+      {n:'High Knees Finisher',   d:'5 × 30s on / 15s off · Max effort',               e:'Bodyweight',ec:'eq-bw'},
     ],
-    cooldown: '5 min — quad stretch, hamstring fold, pigeon pose, calf stretch',
-    tip: '<strong>KB Swings are your secret weapon</strong> — they hit glutes, hamstrings, core and spike heart rate simultaneously. Keep your back flat and power from the hips, not the arms.',
+    cooldown:'5 min — quad stretch, hamstring fold, pigeon pose, calf stretch',
+    tip:'<strong>KB Swings are your secret weapon</strong> — they hit glutes, hamstrings, and core while spiking heart rate. Power from the hips, not the arms.',
   },
   TUE: {
-    icon: '💪', title: 'ARMS + UPPER BODY', sub: 'Biceps, Triceps, Shoulders & Back',
-    intensity: '💪 Moderate', calories: '300–370',
-    warmup: '5 min — arm circles, shoulder rolls, band pull-aparts, light DB curls',
-    equipment: ['2kg Dumbbells', 'Resistance Band'],
-    equipTags: [{ l:'DB 2kg', c:'eq-db' }, { l:'Band', c:'eq-band' }],
-    exercises: [
-      { n:'DB Bicep Curl', d:'4 × 15 reps · 30s rest · Slow 3s lower', e:'DB 2kg', ec:'eq-db' },
-      { n:'DB Hammer Curl', d:'3 × 12 reps · 30s rest · Neutral grip', e:'DB 2kg', ec:'eq-db' },
-      { n:'DB Overhead Tricep Extension', d:'3 × 15 reps · 30s rest · Both arms', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Tricep Pushdown', d:'3 × 20 reps · 20s rest · Anchor band high', e:'Band', ec:'eq-band' },
-      { n:'DB Lateral Raise', d:'4 × 15 reps · 30s rest · Lead with elbows', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Face Pull', d:'3 × 20 reps · 20s rest · Anchor at face height', e:'Band', ec:'eq-band' },
-      { n:'DB Front Raise', d:'3 × 12 reps · 30s rest · Control the descent', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Bicep Curl', d:'3 × 15 reps · 20s rest · Stand on band', e:'Band', ec:'eq-band' },
-      { n:'Push-Up Burnout', d:'3 × max reps · 45s rest · Wide grip', e:'Bodyweight', ec:'eq-bw' },
+    icon:'💪', title:'ARMS + UPPER BODY', sub:'Biceps, Triceps, Shoulders & Back',
+    intensity:'💪 Moderate', calories:'300–370',
+    warmup:'5 min — arm circles, shoulder rolls, band pull-aparts, light DB curls',
+    equipTags:[{l:'DB 2kg',c:'eq-db'},{l:'Band',c:'eq-band'}],
+    exercises:[
+      {n:'DB Bicep Curl',              d:'4 × 15 reps · 30s rest · Slow 3s lower',          e:'DB 2kg',ec:'eq-db'},
+      {n:'DB Hammer Curl',             d:'3 × 12 reps · 30s rest · Neutral grip',            e:'DB 2kg',ec:'eq-db'},
+      {n:'DB Overhead Tricep Ext.',    d:'3 × 15 reps · 30s rest · Both arms overhead',      e:'DB 2kg',ec:'eq-db'},
+      {n:'Band Tricep Pushdown',       d:'3 × 20 reps · 20s rest · Anchor band high',        e:'Band',  ec:'eq-band'},
+      {n:'DB Lateral Raise',           d:'4 × 15 reps · 30s rest · Lead with elbows',        e:'DB 2kg',ec:'eq-db'},
+      {n:'Band Face Pull',             d:'3 × 20 reps · 20s rest · Anchor at face height',   e:'Band',  ec:'eq-band'},
+      {n:'DB Front Raise',             d:'3 × 12 reps · 30s rest · Control the descent',     e:'DB 2kg',ec:'eq-db'},
+      {n:'Band Bicep Curl',            d:'3 × 15 reps · 20s rest · Stand on band',           e:'Band',  ec:'eq-band'},
+      {n:'Push-Up Burnout',            d:'3 × max reps · 45s rest · Wide grip',              e:'Bodyweight',ec:'eq-bw'},
     ],
-    cooldown: '5 min — cross-body shoulder stretch, tricep overhead stretch, doorway chest stretch',
-    tip: '<strong>2kg is more than enough for arms</strong> — focus on time-under-tension. A 3-second lower on every curl creates more burn than lifting heavier with momentum.',
+    cooldown:'5 min — cross-body shoulder stretch, tricep overhead stretch, doorway chest stretch',
+    tip:'<strong>2kg is more than enough for arms</strong> — focus on time-under-tension. A 3-second lower on every curl creates more muscle stimulus than heavier with momentum.',
   },
   WED: {
-    icon: '🏃', title: 'CARDIO + CORE', sub: 'Steady State + Band Core Circuit',
-    intensity: '❤️ Low–Moderate', calories: '320–400',
-    warmup: '5 min — easy walk building to jog, hip openers, ankle circles',
-    equipment: ['Resistance Band', 'Bodyweight'],
-    equipTags: [{ l:'Band', c:'eq-band' }, { l:'Bodyweight', c:'eq-bw' }],
-    exercises: [
-      { n:'Jog / Brisk Walk', d:'25 min at 60–70% max HR · Conversational pace', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Band Pallof Press', d:'3 × 12 each side · 30s rest · Anti-rotation', e:'Band', ec:'eq-band' },
-      { n:'Plank', d:'3 × 40s hold · 20s rest · Neutral spine', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Band Seated Row', d:'3 × 15 reps · 30s rest · Loop around foot', e:'Band', ec:'eq-band' },
-      { n:'Dead Bug', d:'3 × 10 reps · 20s rest · Slow & controlled', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Band Woodchop', d:'3 × 12 each side · 30s rest · Diagonal pull', e:'Band', ec:'eq-band' },
-      { n:'Mountain Climbers', d:'3 × 30s · 20s rest', e:'Bodyweight', ec:'eq-bw' },
+    icon:'🏃', title:'CARDIO + CORE', sub:'Steady State + Band Core Circuit',
+    intensity:'❤️ Low–Moderate', calories:'320–400',
+    warmup:'5 min — easy walk building to jog, hip openers, ankle circles',
+    equipTags:[{l:'Band',c:'eq-band'},{l:'Bodyweight',c:'eq-bw'}],
+    exercises:[
+      {n:'Jog / Brisk Walk',     d:'25 min at 60–70% max HR · Conversational pace',   e:'Bodyweight',ec:'eq-bw'},
+      {n:'Band Pallof Press',    d:'3 × 12 each side · 30s rest · Anti-rotation core',e:'Band',      ec:'eq-band'},
+      {n:'Plank',                d:'3 × 40s hold · 20s rest · Neutral spine',         e:'Bodyweight',ec:'eq-bw'},
+      {n:'Band Seated Row',      d:'3 × 15 reps · 30s rest · Loop around foot',       e:'Band',      ec:'eq-band'},
+      {n:'Dead Bug',             d:'3 × 10 reps · 20s rest · Slow & controlled',      e:'Bodyweight',ec:'eq-bw'},
+      {n:'Band Woodchop',        d:'3 × 12 each side · 30s rest · Diagonal pull',     e:'Band',      ec:'eq-band'},
+      {n:'Mountain Climbers',    d:'3 × 30s · 20s rest',                              e:'Bodyweight',ec:'eq-bw'},
     ],
-    cooldown: '5 min — child\'s pose, cat-cow, seated spinal twist, full-body stretch',
-    tip: '<strong>Wednesday is your aerobic base day.</strong> Keeping intensity moderate lets you burn fat directly as fuel and ensures you\'re fresh for Thursday\'s heavy KB session.',
+    cooldown:"5 min — child's pose, cat-cow, seated spinal twist, full-body stretch",
+    tip:"<strong>Wednesday is your aerobic base day.</strong> Moderate intensity burns fat directly as fuel and keeps you fresh for Thursday's heavy KB session.",
   },
   THU: {
-    icon: '⚡', title: 'FULL BODY KB CIRCUIT', sub: 'Metabolic Kettlebell + Dumbbell Power',
-    intensity: '🔥 High Intensity', calories: '430–510',
-    warmup: '5 min — jumping jacks, KB deadlift practice, arm swings, hip openers',
-    equipment: ['10kg Kettlebell', '2kg Dumbbells'],
-    equipTags: [{ l:'KB 10kg', c:'eq-kb' }, { l:'DB 2kg', c:'eq-db' }],
-    exercises: [
-      { n:'KB Clean & Press', d:'4 × 8 each arm · 45s rest · Full extension', e:'KB 10kg', ec:'eq-kb' },
-      { n:'KB One-Arm Row', d:'3 × 12 each arm · 45s rest · Hinge forward', e:'KB 10kg', ec:'eq-kb' },
-      { n:'DB Thruster (Squat+Press)', d:'3 × 12 reps · 30s rest · Fluid drive', e:'DB 2kg', ec:'eq-db' },
-      { n:'KB Deadlift', d:'4 × 15 reps · 45s rest · Hip hinge pattern', e:'KB 10kg', ec:'eq-kb' },
-      { n:'DB Renegade Row', d:'3 × 8 each arm · 45s rest · Core stays tight', e:'DB 2kg', ec:'eq-db' },
-      { n:'KB Figure-8', d:'3 × 20 reps · 30s rest · Smooth pass between legs', e:'KB 10kg', ec:'eq-kb' },
-      { n:'Burpees', d:'4 × 10 reps · 30s rest · Max effort', e:'Bodyweight', ec:'eq-bw' },
-      { n:'KB Halo', d:'3 × 10 each direction · 20s rest · Shoulder stability', e:'KB 10kg', ec:'eq-kb' },
+    icon:'⚡', title:'FULL BODY KB CIRCUIT', sub:'Metabolic Kettlebell + Dumbbell Power',
+    intensity:'🔥 High Intensity', calories:'430–510',
+    warmup:'5 min — jumping jacks, KB deadlift practice, arm swings, hip openers',
+    equipTags:[{l:'KB 10kg',c:'eq-kb'},{l:'DB 2kg',c:'eq-db'}],
+    exercises:[
+      {n:'KB Clean & Press',      d:'4 × 8 each arm · 45s rest · Full extension overhead',  e:'KB 10kg',ec:'eq-kb'},
+      {n:'KB One-Arm Row',        d:'3 × 12 each arm · 45s rest · Hinge forward',           e:'KB 10kg',ec:'eq-kb'},
+      {n:'DB Thruster',           d:'3 × 12 reps · 30s rest · Squat + press combined',      e:'DB 2kg', ec:'eq-db'},
+      {n:'KB Deadlift',           d:'4 × 15 reps · 45s rest · Hip hinge pattern',           e:'KB 10kg',ec:'eq-kb'},
+      {n:'DB Renegade Row',       d:'3 × 8 each arm · 45s rest · Core stays tight',         e:'DB 2kg', ec:'eq-db'},
+      {n:'KB Figure-8',           d:'3 × 20 reps · 30s rest · Smooth pass between legs',    e:'KB 10kg',ec:'eq-kb'},
+      {n:'Burpees',               d:'4 × 10 reps · 30s rest · Max effort',                  e:'Bodyweight',ec:'eq-bw'},
+      {n:'KB Halo',               d:'3 × 10 each direction · 20s rest · Shoulder stability',e:'KB 10kg',ec:'eq-kb'},
     ],
-    cooldown: '5 min — foam roll quads, lats, hamstrings + light shoulder stretch',
-    tip: '<strong>KB Clean & Press is king</strong> — it combines pull, squat and push into one explosive move, making it the highest calorie-burning single exercise in this programme.',
+    cooldown:'5 min — foam roll quads, lats, hamstrings + light shoulder stretch',
+    tip:'<strong>KB Clean & Press is king</strong> — it combines a pull, squat, and press into one explosive move, making it the highest calorie-burning single exercise here.',
   },
   FRI: {
-    icon: '🍑', title: 'LEGS + BAND SCULPT', sub: 'Glutes, Hamstrings & Leg Tone',
-    intensity: '💪 Moderate', calories: '330–410',
-    warmup: '5 min — glute activation with band, clamshells, hip circles, leg swings',
-    equipment: ['2kg Dumbbells', 'Resistance Band', '10kg Kettlebell'],
-    equipTags: [{ l:'DB 2kg', c:'eq-db' }, { l:'Band', c:'eq-band' }, { l:'KB 10kg', c:'eq-kb' }],
-    exercises: [
-      { n:'DB Sumo Squat', d:'4 × 15 reps · 30s rest · Hold DB vertically', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Clamshells', d:'3 × 20 each side · 15s rest · Band above knees', e:'Band', ec:'eq-band' },
-      { n:'KB Single-Leg Deadlift', d:'3 × 10 each leg · 45s rest · Balance focus', e:'KB 10kg', ec:'eq-kb' },
-      { n:'Band Lateral Walk', d:'3 × 20 steps each dir · 20s rest', e:'Band', ec:'eq-band' },
-      { n:'DB Step-Up + Knee Drive', d:'3 × 12 each leg · 45s rest', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Hip Thrust (floor)', d:'4 × 20 reps · 20s rest · Band across hips', e:'Band', ec:'eq-band' },
-      { n:'DB Curtsy Lunge', d:'3 × 12 each leg · 30s rest', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Standing Kickback', d:'3 × 15 each leg · 20s rest', e:'Band', ec:'eq-band' },
+    icon:'🍑', title:'LEGS + BAND SCULPT', sub:'Glutes, Hamstrings & Leg Tone',
+    intensity:'💪 Moderate', calories:'330–410',
+    warmup:'5 min — glute activation with band, clamshells, hip circles, leg swings',
+    equipTags:[{l:'DB 2kg',c:'eq-db'},{l:'Band',c:'eq-band'},{l:'KB 10kg',c:'eq-kb'}],
+    exercises:[
+      {n:'DB Sumo Squat',           d:'4 × 15 reps · 30s rest · Hold DB vertically',        e:'DB 2kg', ec:'eq-db'},
+      {n:'Band Clamshells',         d:'3 × 20 each side · 15s rest · Band above knees',     e:'Band',   ec:'eq-band'},
+      {n:'KB Single-Leg Deadlift',  d:'3 × 10 each leg · 45s rest · Balance focus',         e:'KB 10kg',ec:'eq-kb'},
+      {n:'Band Lateral Walk',       d:'3 × 20 steps each dir · 20s rest',                   e:'Band',   ec:'eq-band'},
+      {n:'DB Step-Up + Knee Drive', d:'3 × 12 each leg · 45s rest',                         e:'DB 2kg', ec:'eq-db'},
+      {n:'Band Hip Thrust (floor)', d:'4 × 20 reps · 20s rest · Band across hips',          e:'Band',   ec:'eq-band'},
+      {n:'DB Curtsy Lunge',         d:'3 × 12 each leg · 30s rest',                         e:'DB 2kg', ec:'eq-db'},
+      {n:'Band Standing Kickback',  d:'3 × 15 each leg · 20s rest',                         e:'Band',   ec:'eq-band'},
     ],
-    cooldown: '5 min — pigeon pose, figure-4 stretch, standing hip flexor stretch',
-    tip: '<strong>Band hip thrusts hit glutes far harder</strong> than bodyweight alone. Keep the band positioned just above your hips and drive through your heels for maximum activation.',
+    cooldown:'5 min — pigeon pose, figure-4 stretch, standing hip flexor stretch',
+    tip:'<strong>Band hip thrusts hit glutes far harder</strong> than bodyweight alone. Position band just above your hips and drive through your heels for maximum activation.',
   },
   SAT: {
-    icon: '🏋️', title: 'ARMS + ABS FINISHER', sub: 'Biceps, Triceps & Core Burn',
-    intensity: '💪 Moderate', calories: '280–350',
-    warmup: '5 min — arm swings, wrist circles, band pull-aparts, light core activation',
-    equipment: ['2kg Dumbbells', 'Resistance Band'],
-    equipTags: [{ l:'DB 2kg', c:'eq-db' }, { l:'Band', c:'eq-band' }],
-    exercises: [
-      { n:'DB Concentration Curl', d:'3 × 15 each arm · 30s rest · Full squeeze at top', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Overhead Tricep Ext.', d:'3 × 15 reps · 25s rest · Anchor band low', e:'Band', ec:'eq-band' },
-      { n:'DB Zottman Curl', d:'3 × 12 reps · 30s rest · Rotate at top', e:'DB 2kg', ec:'eq-db' },
-      { n:'Band Skull Crusher', d:'3 × 15 reps · 25s rest · Anchor band high', e:'Band', ec:'eq-band' },
-      { n:'DB Arnold Press', d:'3 × 12 reps · 35s rest · Rotate through press', e:'DB 2kg', ec:'eq-db' },
-      { n:'Plank Hip Dips', d:'3 × 15 each side · 20s rest', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Bicycle Crunches', d:'3 × 20 reps · 20s rest · Slow & controlled', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Leg Raises', d:'3 × 15 reps · 20s rest', e:'Bodyweight', ec:'eq-bw' },
+    icon:'🏋️', title:'ARMS + ABS FINISHER', sub:'Biceps, Triceps & Core Burn',
+    intensity:'💪 Moderate', calories:'280–350',
+    warmup:'5 min — arm swings, wrist circles, band pull-aparts, light core activation',
+    equipTags:[{l:'DB 2kg',c:'eq-db'},{l:'Band',c:'eq-band'}],
+    exercises:[
+      {n:'DB Concentration Curl',      d:'3 × 15 each arm · 30s rest · Full squeeze at top', e:'DB 2kg',ec:'eq-db'},
+      {n:'Band Overhead Tricep Ext.',  d:'3 × 15 reps · 25s rest · Anchor band low',         e:'Band',  ec:'eq-band'},
+      {n:'DB Zottman Curl',            d:'3 × 12 reps · 30s rest · Rotate at the top',       e:'DB 2kg',ec:'eq-db'},
+      {n:'Band Skull Crusher',         d:'3 × 15 reps · 25s rest · Anchor band high',        e:'Band',  ec:'eq-band'},
+      {n:'DB Arnold Press',            d:'3 × 12 reps · 35s rest · Rotate through press',    e:'DB 2kg',ec:'eq-db'},
+      {n:'Plank Hip Dips',             d:'3 × 15 each side · 20s rest',                      e:'Bodyweight',ec:'eq-bw'},
+      {n:'Bicycle Crunches',           d:'3 × 20 reps · 20s rest · Slow & controlled',       e:'Bodyweight',ec:'eq-bw'},
+      {n:'Leg Raises',                 d:'3 × 15 reps · 20s rest',                           e:'Bodyweight',ec:'eq-bw'},
     ],
-    cooldown: '5 min — cross-body stretch, tricep overhead stretch, neck rolls',
-    tip: '<strong>Saturday is optional but powerful</strong> — if you\'re fatigued, rest instead. If you feel good, this arms & abs session is low-stress on the body but great for definition.',
+    cooldown:'5 min — cross-body stretch, tricep overhead stretch, neck rolls',
+    tip:"<strong>Saturday is optional but powerful.</strong> If you're fatigued, rest instead. If you feel good, this session is low-stress on the body but great for definition.",
   },
   SUN: {
-    icon: '🧘', title: 'ACTIVE RECOVERY', sub: 'Mobility, Stretching & Light Movement',
-    intensity: '🌿 Easy', calories: '80–150',
-    warmup: 'No warmup needed — start slowly and move gently',
-    equipment: ['Bodyweight'],
-    equipTags: [{ l:'Bodyweight', c:'eq-bw' }],
-    exercises: [
-      { n:'10 min Walk (easy)', d:'Outdoors preferred · Conversational pace', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Cat-Cow', d:'2 × 10 reps · Breathe through each', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Hip Flexor Stretch', d:'2 × 45s each side · Lunge position', e:'Bodyweight', ec:'eq-bw' },
-      { n:'World\'s Greatest Stretch', d:'2 × 8 reps each side · Take your time', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Downward Dog', d:'2 × 30s hold', e:'Bodyweight', ec:'eq-bw' },
-      { n:'Foam Roll / Self Massage', d:'5 min · Quads, hamstrings, lats', e:'Bodyweight', ec:'eq-bw' },
+    icon:'🧘', title:'ACTIVE RECOVERY', sub:'Mobility, Stretching & Light Movement',
+    intensity:'🌿 Easy', calories:'80–150',
+    warmup:'No warmup needed — start slowly and move gently',
+    equipTags:[{l:'Bodyweight',c:'eq-bw'}],
+    exercises:[
+      {n:'10 min Easy Walk',          d:'Outdoors preferred · Conversational pace',           e:'Bodyweight',ec:'eq-bw'},
+      {n:'Cat-Cow',                   d:'2 × 10 reps · Breathe through each',                e:'Bodyweight',ec:'eq-bw'},
+      {n:'Hip Flexor Stretch',        d:'2 × 45s each side · Lunge position',                e:'Bodyweight',ec:'eq-bw'},
+      {n:"World's Greatest Stretch",  d:'2 × 8 reps each side · Take your time',             e:'Bodyweight',ec:'eq-bw'},
+      {n:'Downward Dog',              d:'2 × 30s hold',                                      e:'Bodyweight',ec:'eq-bw'},
+      {n:'Foam Roll / Self Massage',  d:'5 min · Quads, hamstrings, lats',                   e:'Bodyweight',ec:'eq-bw'},
     ],
-    cooldown: '5 min — savasana / full body relax',
-    tip: '<strong>Recovery days are not wasted days.</strong> Mobility work on Sunday reduces injury risk and keeps your joints healthy so you train harder all week.',
+    cooldown:'5 min — savasana / full body relax',
+    tip:'<strong>Recovery days are not wasted days.</strong> Mobility work on Sunday reduces injury risk and keeps your joints healthy so you can train harder all week.',
   },
 };
 
-const DAY_KEYS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
-const DAY_NAMES = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday', SAT:'Saturday', SUN:'Sunday' };
+const DAY_KEYS  = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+const DAY_NAMES = {MON:'Monday',TUE:'Tuesday',WED:'Wednesday',THU:'Thursday',FRI:'Friday',SAT:'Saturday',SUN:'Sunday'};
 
-// ══════════════════════════════════════════
-// STATE — load from localStorage
-// ══════════════════════════════════════════
+// ══════ STATE ══════
 function loadState() {
-  try {
-    const s = localStorage.getItem('fbState');
-    if (s) return JSON.parse(s);
-  } catch(e) {}
+  try { const s = localStorage.getItem('fbState_v4'); if(s) return JSON.parse(s); } catch(e){}
   return null;
 }
 function saveState() {
-  try { localStorage.setItem('fbState', JSON.stringify(state)); } catch(e) {}
+  try { localStorage.setItem('fbState_v4', JSON.stringify(state)); } catch(e){}
 }
-
-const defaultState = {
-  restDays: { SAT: true, SUN: true }, // default rest days
-  completed: {}, // { 'MON-0': true, ... }
-  week: getWeekKey(),
-};
-
-let state = loadState() || { ...defaultState };
-// Reset completed if new week
-if (state.week !== getWeekKey()) {
-  state.completed = {};
-  state.week = getWeekKey();
-  saveState();
-}
-
 function getWeekKey() {
-  const d = new Date();
-  const jan1 = new Date(d.getFullYear(), 0, 1);
-  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-  return d.getFullYear() + '-W' + week;
+  const d = new Date(), jan1 = new Date(d.getFullYear(),0,1);
+  return d.getFullYear()+'-W'+Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
 }
-
 function getTodayKey() {
-  const keys = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  return keys[new Date().getDay()];
+  return ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date().getDay()];
 }
 
-// ══════════════════════════════════════════
-// HOME RENDER
-// ══════════════════════════════════════════
+let state = loadState() || { restDays:{SAT:true,SUN:true}, completed:{}, week:getWeekKey() };
+if (state.week !== getWeekKey()) { state.completed={}; state.week=getWeekKey(); saveState(); }
+
+// ══════ HOME ══════
 function renderHome() {
-  const todayKey = getTodayKey();
-  const isRest = state.restDays[todayKey];
-  const w = WORKOUTS[todayKey];
-
-  // Today card
+  const tk = getTodayKey(), isRest = state.restDays[tk], w = WORKOUTS[tk];
+  const card = document.getElementById('todayCard');
   if (isRest) {
-    document.getElementById('tcEye').textContent = DAY_NAMES[todayKey] + ' · Rest Day';
+    document.getElementById('tcEye').textContent   = DAY_NAMES[tk]+' · Rest Day';
     document.getElementById('tcTitle').textContent = 'REST & RECOVER';
-    document.getElementById('tcSub').textContent = 'Light walk or yoga — your body repairs today';
-    document.getElementById('tcChip').textContent = '😴 Recovery';
-    document.getElementById('todayCard').style.cursor = 'default';
-    document.getElementById('todayCard').onclick = null;
+    document.getElementById('tcSub').textContent   = 'Light walk or yoga — your body repairs today';
+    document.getElementById('tcChip').textContent  = '😴 Recovery';
+    card.style.cursor='default'; card.onclick=null;
   } else {
-    document.getElementById('tcEye').textContent = DAY_NAMES[todayKey] + ' · Workout';
+    document.getElementById('tcEye').textContent   = DAY_NAMES[tk]+' · Workout';
     document.getElementById('tcTitle').textContent = w.title;
-    document.getElementById('tcSub').textContent = w.sub;
-    document.getElementById('tcChip').textContent = w.intensity;
-    document.getElementById('todayCard').style.cursor = 'pointer';
-    document.getElementById('todayCard').onclick = openTodayWorkout;
+    document.getElementById('tcSub').textContent   = w.sub;
+    document.getElementById('tcChip').textContent  = w.intensity;
+    card.style.cursor='pointer'; card.onclick=openTodayWorkout;
   }
-
-  // Week strip
   const strip = document.getElementById('weekStrip');
-  strip.innerHTML = '';
+  strip.innerHTML='';
   DAY_KEYS.forEach(k => {
-    const isToday = k === todayKey;
-    const isRestDay = state.restDays[k];
-    const isDone = isDayDone(k);
-    const pill = document.createElement('div');
-    pill.className = 'day-pill' + (isToday?' is-today':'') + (isRestDay?' is-rest':'') + (isDone?' is-done':'');
-    pill.innerHTML = `
-      ${isRestDay ? '<div class="rest-tag">REST</div>' : ''}
-      <div class="dp-name">${k}</div>
-      <div class="dp-icon">${isRestDay ? '😴' : WORKOUTS[k].icon}</div>
-      <div class="dp-lbl">${isDone ? '✓ Done' : isRestDay ? 'Rest' : 'Workout'}</div>
-    `;
-    if (!isRestDay) pill.onclick = () => openWorkout(k);
-    strip.appendChild(pill);
+    const isToday=k===tk, isRestDay=!!state.restDays[k], done=isDayDone(k);
+    const p = document.createElement('div');
+    p.className='day-pill'+(isToday?' is-today':'')+(isRestDay?' is-rest':'')+(done?' is-done':'');
+    p.innerHTML=(isRestDay?'<div class="rest-tag">REST</div>':'')+
+      '<div class="dp-name">'+k+'</div>'+
+      '<div class="dp-icon">'+(isRestDay?'😴':WORKOUTS[k].icon)+'</div>'+
+      '<div class="dp-lbl">'+(done?'✓ Done':isRestDay?'Rest':'Workout')+'</div>';
+    if(!isRestDay) p.onclick=()=>openWorkout(k);
+    strip.appendChild(p);
   });
-
   updateRing();
 }
 
 function isDayDone(k) {
-  if (state.restDays[k]) return false;
-  const w = WORKOUTS[k];
-  return w.exercises.every((_, i) => state.completed[k+'-'+i]);
+  if(state.restDays[k]) return false;
+  return WORKOUTS[k].exercises.every((_,i)=>state.completed[k+'-'+i]);
 }
 
 function updateRing() {
-  let totalEx = 0, doneEx = 0, daysDone = 0;
-  DAY_KEYS.forEach(k => {
-    if (!state.restDays[k]) {
-      const w = WORKOUTS[k];
-      totalEx += w.exercises.length;
-      doneEx += w.exercises.filter((_, i) => state.completed[k+'-'+i]).length;
-      if (isDayDone(k)) daysDone++;
+  let total=0,done=0,days=0;
+  DAY_KEYS.forEach(k=>{
+    if(!state.restDays[k]){
+      total+=WORKOUTS[k].exercises.length;
+      done+=WORKOUTS[k].exercises.filter((_,i)=>state.completed[k+'-'+i]).length;
+      if(isDayDone(k)) days++;
     }
   });
-  const pct = totalEx > 0 ? Math.round((doneEx / totalEx) * 100) : 0;
-  const circ = 232.5;
-  document.getElementById('ringCircle').style.strokeDashoffset = circ - (pct / 100) * circ;
-  document.getElementById('ringPct').textContent = pct + '%';
-  document.getElementById('statEx').innerHTML = doneEx + ' <span style="font-size:13px;color:var(--muted)">exercises</span>';
-  document.getElementById('statDays').innerHTML = daysDone + ' <span style="font-size:13px;color:var(--muted)">workout days</span>';
+  const pct=total>0?Math.round((done/total)*100):0, circ=232.5;
+  document.getElementById('ringCircle').style.strokeDashoffset=circ-(pct/100)*circ;
+  document.getElementById('ringPct').textContent=pct+'%';
+  document.getElementById('statEx').innerHTML=done+' <span style="font-size:13px;color:var(--muted)">exercises</span>';
+  document.getElementById('statDays').innerHTML=days+' <span style="font-size:13px;color:var(--muted)">workout days</span>';
 }
 
-// ══════════════════════════════════════════
-// SCHEDULE RENDER
-// ══════════════════════════════════════════
+// ══════ SCHEDULE ══════
 function renderSchedule() {
-  const todayKey = getTodayKey();
-  const list = document.getElementById('schList');
-  list.innerHTML = '';
-
-  DAY_KEYS.forEach(k => {
-    const isRest = state.restDays[k];
-    const isToday = k === todayKey;
-    const isDone = isDayDone(k);
-    const w = WORKOUTS[k];
-
-    const card = document.createElement('div');
-    card.className = 'sch-card' + (isToday?' is-today':'') + (isRest?' is-rest':'') + (isDone?' is-done':'');
-
-    card.innerHTML = `
-      <div class="sch-badge ${isRest?'rest-badge':'workout-badge'}">
-        <div class="sch-badge-icon">${isRest ? '😴' : w.icon}</div>
-        <div class="sch-badge-day">${k}</div>
-      </div>
-      <div class="sch-info">
-        <div class="sch-name">${isRest ? 'REST DAY' : w.title}</div>
-        <div class="sch-detail">${isRest ? 'Recovery · ' + DAY_NAMES[k] : w.sub}</div>
-      </div>
-      <div class="sch-right">
-        <button class="rest-toggle ${isRest?'unset-rest':'set-rest'}" onclick="toggleRest(event,'${k}')">
-          ${isRest ? '↩ Workout' : '😴 Set Rest'}
-        </button>
-        ${isDone ? '<div class="done-badge">✓</div>' : ''}
-      </div>
-    `;
-
-    if (!isRest) card.onclick = (e) => { if(!e.target.classList.contains('rest-toggle')) openWorkout(k); };
+  const tk=getTodayKey(), list=document.getElementById('schList');
+  list.innerHTML='';
+  DAY_KEYS.forEach(k=>{
+    const isRest=!!state.restDays[k], isToday=k===tk, done=isDayDone(k), w=WORKOUTS[k];
+    const card=document.createElement('div');
+    card.className='sch-card'+(isToday?' is-today':'')+(isRest?' is-rest':'')+(done?' is-done':'');
+    card.innerHTML=
+      '<div class="sch-badge '+(isRest?'rest-badge':'workout-badge')+'">'+
+        '<div class="sch-badge-icon">'+(isRest?'😴':w.icon)+'</div>'+
+        '<div class="sch-badge-day">'+k+'</div>'+
+      '</div>'+
+      '<div class="sch-info">'+
+        '<div class="sch-name">'+(isRest?'REST DAY':w.title)+'</div>'+
+        '<div class="sch-detail">'+(isRest?'Recovery · '+DAY_NAMES[k]:w.sub)+'</div>'+
+      '</div>'+
+      '<div class="sch-right">'+
+        '<button class="rest-toggle '+(isRest?'unset-rest':'set-rest')+'" onclick="toggleRest(event,\''+k+'\')">'+
+          (isRest?'↩ Workout':'😴 Set Rest')+
+        '</button>'+
+        (done?'<div class="done-badge">✓</div>':'')+
+      '</div>';
+    if(!isRest) card.onclick=(e)=>{ if(!e.target.classList.contains('rest-toggle')) openWorkout(k); };
     list.appendChild(card);
   });
 }
 
-function toggleRest(e, k) {
+function toggleRest(e,k) {
   e.stopPropagation();
-  if (state.restDays[k]) {
-    delete state.restDays[k];
-    showToast('💪 ' + DAY_NAMES[k] + ' set as Workout');
-  } else {
-    state.restDays[k] = true;
-    showToast('😴 ' + DAY_NAMES[k] + ' set as Rest Day');
-  }
-  saveState();
-  renderSchedule();
-  renderHome();
+  if(state.restDays[k]){ delete state.restDays[k]; showToast('💪 '+DAY_NAMES[k]+' set as Workout'); }
+  else { state.restDays[k]=true; showToast('😴 '+DAY_NAMES[k]+' set as Rest Day'); }
+  saveState(); renderSchedule(); renderHome();
 }
 
-// ══════════════════════════════════════════
-// WORKOUT SCREEN
-// ══════════════════════════════════════════
-let currentKey = null;
-
-function openTodayWorkout() {
-  const k = getTodayKey();
-  if (!state.restDays[k]) openWorkout(k);
-}
+// ══════ WORKOUT ══════
+let currentKey=null;
+function openTodayWorkout(){ const k=getTodayKey(); if(!state.restDays[k]) openWorkout(k); }
 
 function openWorkout(k) {
-  currentKey = k;
-  const w = WORKOUTS[k];
-  document.getElementById('wTitle').textContent = w.title;
-  document.getElementById('wSub').textContent = DAY_NAMES[k] + ' · ' + w.calories + ' kcal est.';
-
-  const scroll = document.getElementById('wScroll');
-  scroll.innerHTML = '';
-
-  // Equipment strip
-  const eStrip = document.createElement('div');
-  eStrip.className = 'equip-strip';
-  w.equipTags.forEach(t => {
-    const tag = document.createElement('span');
-    tag.className = 'equip-tag ' + t.c;
-    tag.textContent = '🏷 ' + t.l;
-    eStrip.appendChild(tag);
+  currentKey=k; const w=WORKOUTS[k];
+  document.getElementById('wTitle').textContent=w.title;
+  document.getElementById('wSub').textContent=DAY_NAMES[k]+' · '+w.calories+' kcal est.';
+  const scroll=document.getElementById('wScroll'); scroll.innerHTML='';
+  const es=document.createElement('div'); es.className='equip-strip';
+  w.equipTags.forEach(t=>{ const tag=document.createElement('span'); tag.className='equip-tag '+t.c; tag.textContent='🏷 '+t.l; es.appendChild(tag); });
+  scroll.appendChild(es);
+  addPh(scroll,'🌡 WARM-UP · 5 MIN');
+  const wu=document.createElement('div'); wu.className='phase-box'; wu.textContent=w.warmup; scroll.appendChild(wu);
+  addPh(scroll,'⚡ MAIN WORKOUT');
+  w.exercises.forEach((ex,i)=>{
+    const done=!!state.completed[k+'-'+i], row=document.createElement('div');
+    row.className='ex-row'+(done?' done':''); row.id='exr-'+i;
+    row.innerHTML='<div class="ex-cb" id="excb-'+i+'">'+(done?'✓':'')+'</div>'+
+      '<div class="ex-n">'+String(i+1).padStart(2,'0')+'</div>'+
+      '<div class="ex-body"><div class="ex-name">'+ex.n+'</div><div class="ex-detail">'+ex.d+'</div></div>'+
+      '<span class="ex-etag '+ex.ec+'">'+ex.e+'</span>';
+    row.onclick=()=>toggleEx(i); scroll.appendChild(row);
   });
-  scroll.appendChild(eStrip);
-
-  // Warmup
-  addPh(scroll, '🌡 WARM-UP · 5 MIN');
-  const wu = document.createElement('div'); wu.className='phase-box'; wu.textContent=w.warmup; scroll.appendChild(wu);
-
-  // Exercises
-  addPh(scroll, '⚡ MAIN WORKOUT');
-  w.exercises.forEach((ex, i) => {
-    const done = !!state.completed[k+'-'+i];
-    const row = document.createElement('div');
-    row.className = 'ex-row' + (done?' done':'');
-    row.id = 'exr-'+i;
-    row.innerHTML = `
-      <div class="ex-cb" id="excb-${i}">${done?'✓':''}</div>
-      <div class="ex-n">${String(i+1).padStart(2,'0')}</div>
-      <div class="ex-body">
-        <div class="ex-name">${ex.n}</div>
-        <div class="ex-detail">${ex.d}</div>
-      </div>
-      <span class="ex-etag ${ex.ec}">${ex.e}</span>
-    `;
-    row.onclick = () => toggleEx(i);
-    scroll.appendChild(row);
-  });
-
-  // Cooldown
-  addPh(scroll, '🧘 COOL-DOWN · 5 MIN');
-  const cd = document.createElement('div'); cd.className='phase-box'; cd.textContent=w.cooldown; scroll.appendChild(cd);
-
-  // Burn
-  const burn = document.createElement('div');
-  burn.className = 'burn-card';
-  burn.innerHTML = `<div class="burn-flame">🔥</div><div><div class="burn-val">${w.calories}</div><div class="burn-lbl">kcal estimated</div></div><div class="burn-note">Varies by weight &amp; effort</div>`;
+  addPh(scroll,'🧘 COOL-DOWN · 5 MIN');
+  const cd=document.createElement('div'); cd.className='phase-box'; cd.textContent=w.cooldown; scroll.appendChild(cd);
+  const burn=document.createElement('div'); burn.className='burn-card';
+  burn.innerHTML='<div class="burn-flame">🔥</div><div><div class="burn-val">'+w.calories+'</div><div class="burn-lbl">kcal estimated</div></div><div class="burn-note">Varies by weight &amp; effort</div>';
   scroll.appendChild(burn);
-
-  // Tip
-  const tip = document.createElement('div');
-  tip.className = 'w-tip'; tip.innerHTML = '💡 ' + w.tip; scroll.appendChild(tip);
-  scroll.appendChild(Object.assign(document.createElement('div'), { className:'w-spacer' }));
-
+  const tip=document.createElement('div'); tip.className='w-tip'; tip.innerHTML='💡 '+w.tip; scroll.appendChild(tip);
+  scroll.appendChild(Object.assign(document.createElement('div'),{className:'w-spacer'}));
   updateWProgress();
   document.getElementById('screen-workout').classList.add('open');
-  scroll.scrollTop = 0;
+  scroll.scrollTop=0;
 }
 
-function addPh(parent, txt) {
-  const h = document.createElement('div');
-  h.className = 'ph';
-  h.innerHTML = txt + ' <div class="ph-line"></div>';
-  parent.appendChild(h);
+function addPh(parent,txt) {
+  const h=document.createElement('div'); h.className='ph';
+  h.innerHTML=txt+' <div class="ph-line"></div>'; parent.appendChild(h);
 }
 
 function toggleEx(i) {
-  const k = currentKey;
-  const key = k+'-'+i;
-  state.completed[key] = !state.completed[key];
-  saveState();
-
-  const done = state.completed[key];
-  const row = document.getElementById('exr-'+i);
-  const cb = document.getElementById('excb-'+i);
-  row.classList.toggle('done', done);
-  cb.textContent = done ? '✓' : '';
-  cb.classList.add('popping');
-  setTimeout(() => cb.classList.remove('popping'), 250);
-
-  updateWProgress();
-  updateRing();
-
-  if (isDayDone(k)) showToast('🎉 Session complete! Great work!');
-  else if (done) showToast('✓ Done!');
+  const k=currentKey, key=k+'-'+i;
+  state.completed[key]=!state.completed[key]; saveState();
+  const done=state.completed[key];
+  const row=document.getElementById('exr-'+i), cb=document.getElementById('excb-'+i);
+  row.classList.toggle('done',done); cb.textContent=done?'✓':'';
+  cb.classList.add('popping'); setTimeout(()=>cb.classList.remove('popping'),250);
+  updateWProgress(); updateRing();
+  if(isDayDone(k)) showToast('🎉 Session complete! Great work!');
+  else if(done) showToast('✓ Done!');
 }
 
 function updateWProgress() {
-  const k = currentKey;
-  const w = WORKOUTS[k];
-  const done = w.exercises.filter((_, i) => state.completed[k+'-'+i]).length;
-  document.getElementById('wFill').style.width = Math.round((done/w.exercises.length)*100) + '%';
+  const k=currentKey, w=WORKOUTS[k];
+  const done=w.exercises.filter((_,i)=>state.completed[k+'-'+i]).length;
+  document.getElementById('wFill').style.width=Math.round((done/w.exercises.length)*100)+'%';
 }
 
 function closeWorkout() {
   document.getElementById('screen-workout').classList.remove('open');
   renderHome();
-  if (document.getElementById('screen-schedule').classList.contains('active')) renderSchedule();
+  if(document.getElementById('screen-schedule').classList.contains('active')) renderSchedule();
 }
 
-// ══════════════════════════════════════════
-// TAB + TOAST
-// ══════════════════════════════════════════
-let currentTab = 'home';
+// ══════ TABS + TOAST ══════
 function goTab(t) {
-  currentTab = t;
-  ['home','schedule'].forEach(s => {
-    document.getElementById('screen-'+s).classList.toggle('active', s===t);
-    document.getElementById('nav-'+s).classList.toggle('active', s===t);
+  ['home','schedule'].forEach(s=>{
+    document.getElementById('screen-'+s).classList.toggle('active',s===t);
+    document.getElementById('nav-'+s).classList.toggle('active',s===t);
   });
-  if (t==='home') renderHome();
-  if (t==='schedule') renderSchedule();
+  if(t==='home') renderHome(); else renderSchedule();
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
 }
 
-// ══════════════════════════════════════════
-// SERVICE WORKER
-// ══════════════════════════════════════════
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const base = window.location.pathname.replace(/\/[^\/]*$/, '/');
-    navigator.serviceWorker.register(base + 'sw.js').catch(() => {});
+// ══════ SERVICE WORKER (register fresh v4) ══════
+if('serviceWorker' in navigator) {
+  window.addEventListener('load',()=>{
+    const base=window.location.pathname.replace(/\/[^\/]*$/,'/');
+    navigator.serviceWorker.register(base+'sw.js').catch(()=>{});
   });
 }
 
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
+// ══════ INIT ══════
 renderHome();
 </script>
 </body>
