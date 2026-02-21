@@ -1,9 +1,10 @@
-const CACHE_NAME = 'fatburn-v1';
+const CACHE_NAME = 'fatburn-v2';
+const BASE = '/fat-burn-pwa-dumpala/';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'
+  BASE,
+  BASE + 'index.html',
+  BASE + 'manifest.json',
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap'
 ];
 
 self.addEventListener('install', e => {

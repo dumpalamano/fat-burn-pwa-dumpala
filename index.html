@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="FatBurn">
 <meta name="theme-color" content="#0d0d0d">
 <title>Fat Burn Protocol</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 
@@ -776,20 +776,25 @@ function renderHome() {
   DAYS.forEach((d, i) => {
     const pill = document.createElement('div');
     pill.className = 'day-pill' + (i === todayIdx ? ' today' : '') + (d.rest ? ' rest-day' : '') + (isDayComplete(i) ? ' completed' : '');
-    pill.innerHTML = `<div class="day-pill-name">${d.short}</div><div class="day-pill-icon">${d.icon}</div><div class="day-pill-label">${isDayComplete(i) ? '✓ Done' : d.rest ? 'Rest' : 'Workout'}</div>`;
+    pill.innerHTML = '<div class="day-pill-name">' + d.short + '</div><div class="day-pill-icon">' + d.icon + '</div><div class="day-pill-label">' + (isDayComplete(i) ? '✓ Done' : d.rest ? 'Rest' : 'Workout') + '</div>';
     if (!d.rest) pill.onclick = () => openWorkout(i);
     pillsEl.appendChild(pill);
   });
 
-  // Today card
+  // Today card — safely handle rest days
+  const todayCard = document.getElementById('todayCard');
   if (today.rest) {
     document.getElementById('todayTitle').textContent = 'REST DAY';
-    document.getElementById('todaySub').textContent = 'Recovery — light walk or yoga is fine';
-    document.getElementById('todayChip1').textContent = '😴 Rest';
+    document.getElementById('todaySub').textContent = today.name + ' — recover, recharge, stay hydrated';
+    document.getElementById('todayChip1').textContent = '😴 Rest & Recover';
+    todayCard.style.cursor = 'default';
+    todayCard.onclick = null;
   } else {
     document.getElementById('todayTitle').textContent = today.title;
     document.getElementById('todaySub').textContent = today.sub;
     document.getElementById('todayChip1').textContent = today.intensity;
+    todayCard.style.cursor = 'pointer';
+    todayCard.onclick = openTodayWorkout;
   }
 
   // Ring
@@ -851,7 +856,7 @@ function openWorkout(i) {
   currentDayIdx = i;
   const d = DAYS[i];
   document.getElementById('wTopTitle').textContent = d.title;
-  document.getElementById('wTopSub').textContent = d.name + ' · ' + d.calories + ' kcal est.';
+  document.getElementById('wTopSub').textContent = d.rest ? d.name + ' — Rest Day' : d.name + ' · ' + d.calories + ' kcal est.';
 
   const area = document.getElementById('workoutScrollArea');
   area.innerHTML = '';
@@ -994,7 +999,9 @@ function showToast(msg) {
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    // Detect base path for GitHub Pages subdirectory hosting
+    const swPath = window.location.pathname.replace(/\/[^\/]*$/, '/sw.js');
+    navigator.serviceWorker.register(swPath).catch(() => {});
   });
 }
 
